@@ -7,14 +7,16 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.View
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.test_kotlin_opencv.ui.theme.TestkotlinopencvTheme
@@ -27,6 +29,7 @@ import org.opencv.android.LoaderCallbackInterface.SUCCESS
 import org.opencv.android.OpenCVLoader
 import org.opencv.android.OpenCVLoader.OPENCV_VERSION_3_0_0
 import org.opencv.core.Mat
+
 
 class MainActivity : ComponentActivity(), CvCameraViewListener2 {
     var javaCameraView: JavaCameraView? = null
@@ -54,6 +57,7 @@ class MainActivity : ComponentActivity(), CvCameraViewListener2 {
     /** Called when the activity is first created.  */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
 //        setContentView(R.layout.activity_main)
 //        javaCameraView =
@@ -134,6 +138,7 @@ class MainActivity : ComponentActivity(), CvCameraViewListener2 {
     fun Greeting(name: String) {
         Column() {
             Text(text = "Hello $name!")
+
             AndroidView(
                 factory = { context: Context ->
                     var view = LayoutInflater.from(context)
@@ -145,8 +150,11 @@ class MainActivity : ComponentActivity(), CvCameraViewListener2 {
                     // do whatever you want...
                     view // return the view
                 },
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
             )
+
+
         }
     }
 
