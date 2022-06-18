@@ -1,24 +1,17 @@
 package com.example.test_kotlin_opencv
 
 import android.annotation.TargetApi
-import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN
-import android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-import android.widget.TextView
-import android.widget.Toast
-import android.widget.Toast.LENGTH_LONG
+import android.view.View
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -29,34 +22,26 @@ import org.opencv.android.BaseLoaderCallback
 import org.opencv.android.CameraBridgeViewBase
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2
+import org.opencv.android.JavaCameraView
 import org.opencv.android.LoaderCallbackInterface.SUCCESS
 import org.opencv.android.OpenCVLoader
 import org.opencv.android.OpenCVLoader.OPENCV_VERSION_3_0_0
-import org.opencv.core.*
-import org.opencv.core.CvType.CV_8U
-import org.opencv.imgproc.Imgproc.*
-import androidx.activity.compose.setContent
-import java.util.ArrayList
+import org.opencv.core.Mat
 
 class MainActivity : ComponentActivity(), CvCameraViewListener2 {
-    private var openCvCameraView: CameraBridgeViewBase? = null
-    private lateinit var intermediateMat: Mat
+    var javaCameraView: JavaCameraView? = null
+    var activeCamera = CameraBridgeViewBase.CAMERA_ID_BACK
 
     private val loaderCallback: BaseLoaderCallback = object : BaseLoaderCallback(this) {
         override fun onManagerConnected(status: Int) {
             if (status == SUCCESS) {
                 Log.i(TAG, "OpenCV loaded successfully")
-                openCvCameraView?.enableView()
+                javaCameraView?.enableView()
             } else {
                 super.onManagerConnected(status)
             }
         }
     }
-
-    val cameraViewList: List<CameraBridgeViewBase?>
-        get() {
-            return listOf(openCvCameraView)
-        }
 
     companion object {
         private const val TAG = "OCVSample::Activity"
@@ -70,39 +55,20 @@ class MainActivity : ComponentActivity(), CvCameraViewListener2 {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        setContentView(R.layout.activity_main)
-
-        openCvCameraView = findViewById(R.id.image_manipulations_activity_surface_view)
-
-        openCvCameraView?.let {
-            it.visibility = CameraBridgeViewBase.VISIBLE
-            it.setCvCameraViewListener(this)
+//        setContentView(R.layout.activity_main)
+//        javaCameraView =
+//            findViewById<View>(R.id.image_manipulations_activity_surface_view) as JavaCameraView
+//        initializeCamera(javaCameraView!!, activeCamera)
+        setContent {
+            Greeting("kareem")
         }
-//        setContent {
-//            AndroidView(
-//                factory = { context: Context ->
-//                    val view = LayoutInflater.from(context)
-//                        .inflate(R.layout.activity_main, null, false)
-//                    openCvCameraView =
-//                        view.findViewById(R.id.image_manipulations_activity_surface_view)
-//                    openCvCameraView?.let {
-//                        it.visibility = CameraBridgeViewBase.VISIBLE
-//                        it.setCvCameraViewListener(this)
-//                    }
-//                    // do whatever you want...
-//                    view // return the view
-//                },
-//                update = { view ->
-//                    // Update the view
-//                }
-//            )
-//        }
+
     }
 
 
     public override fun onPause() {
         super.onPause()
-        openCvCameraView?.disableView()
+        javaCameraView?.disableView()
     }
 
     public override fun onResume() {
@@ -118,15 +84,14 @@ class MainActivity : ComponentActivity(), CvCameraViewListener2 {
 
     public override fun onDestroy() {
         super.onDestroy()
-        openCvCameraView?.disableView()
+        javaCameraView?.disableView()
+
     }
 
     override fun onCameraViewStarted(width: Int, height: Int) {
     }
 
     override fun onCameraViewStopped() {
-        // Explicitly deallocate Mats
-        intermediateMat.release()
     }
 
     override fun onCameraFrame(inputFrame: CvCameraViewFrame): Mat {
@@ -134,18 +99,10 @@ class MainActivity : ComponentActivity(), CvCameraViewListener2 {
         println("kemo")
         return rgba
     }
-//    protected open val cameraViewList: List<CameraBridgeViewBase?>
-//        get() {
-//            return ArrayList<CameraBridgeViewBase?>()
-//        }
+
 
     private fun onCameraPermissionGranted() {
-        val cameraViews = cameraViewList
-        if (cameraViews != null) {
-            for (cameraBridgeViewBase in cameraViews) {
-                cameraBridgeViewBase?.setCameraPermissionGranted()
-            }
-        }
+        javaCameraView?.setCameraPermissionGranted()
     }
 
     override fun onStart() {
@@ -173,18 +130,41 @@ class MainActivity : ComponentActivity(), CvCameraViewListener2 {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
+    @Composable
+    fun Greeting(name: String) {
+        Column() {
+            Text(text = "Hello $name!")
+            AndroidView(
+                factory = { context: Context ->
+                    var view = LayoutInflater.from(context)
+                        .inflate(R.layout.activity_main, null, false)
+                    javaCameraView =
+                        view.findViewById(R.id.image_manipulations_activity_surface_view)
+                    initializeCamera(javaCameraView!!, activeCamera)
 
-}
-
-@Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    TestkotlinopencvTheme {
-        Greeting("Android")
+                    // do whatever you want...
+                    view // return the view
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
+
+    @Preview(showBackground = true)
+    @Composable
+    fun DefaultPreview() {
+        TestkotlinopencvTheme {
+            Greeting("Android")
+        }
+    }
+
+    private fun initializeCamera(javaCameraView: JavaCameraView, activeCamera: Int) {
+        javaCameraView.setCameraPermissionGranted()
+        javaCameraView.setCameraIndex(activeCamera)
+        javaCameraView.visibility = CameraBridgeViewBase.VISIBLE
+        javaCameraView.setCvCameraViewListener(this)
+    }
+
+
 }
+
